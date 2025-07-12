@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ポモドーロタイマー</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* ボディの基本スタイル */
+        body {
+            font-family: 'Inter', sans-serif; /* Interフォントを使用 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* ビューポートの高さ全体 */
+            background-color: #e0f2f7; /* 明るい青の背景 */
+            margin: 0;
+            color: #333;
+            overflow-x: hidden; /* 水平スクロールバーを非表示にする */
+            padding: 20px; /* 小さい画面用にパディングを追加 */
+            box-sizing: border-box; /* パディングを幅に含める */
+        }
+
+        /* タイマー全体のコンテナ */
+        .timer-container {
+            background-color: #ffffff; /* カードの白い背景 */
+            padding: 40px 30px;
+            border-radius: 20px; /* 角を丸くする */
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15); /* 強めの影 */
+            text-align: center;
+            width: 90%; /* レスポンシブな幅 */
+            max-width: 600px; /* 大きい画面での最大幅 */
+            box-sizing: border-box; /* パディングを幅に含める */
+            animation: fadeIn 1s ease-out; /* フェードインアニメーション */
+        }
+
+        /* フェードインアニメーション */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* タイトルのスタイル */
+        h1 {
+            color: #26a69a; /* タイトルのティール色 */
+            margin-bottom: 25px;
+            font-size: 2.8em; /* 大きいタイトル */
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        /* タイマー表示のスタイル */
+        .timer-display {
+            font-size: 6.5em; /* タイマーの非常に大きいフォント */
+            font-weight: bold;
+            margin-bottom: 35px;
+            color: #00796b; /* タイマーの濃いティール色 */
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* 微妙なテキストシャドウ */
+            transition: color 0.5s ease; /* スムーズな色の変化 */
+        }
+
+        /* コントロールセクション */
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap; /* 小さい画面でボタンを折り返す */
+            gap: 15px; /* ボタン間のスペース */
+            margin-bottom: 25px;
+        }
+
+        /* ボタンのスタイル */
+        .controls button, .settings-section button, .bgm-controls button {
+            background-color: #4db6ac; /* 中間のティール色 */
+            color: white;
+            border: none;
+            padding: 15px 35px; /* 十分なパディング */
+            border-radius: 10px; /* 丸いボタン */
+            cursor: pointer;
+            font-size: 1.3em;
+            font-weight: 600;
+            transition: all 0.3s ease; /* すべてのプロパティのスムーズな変化 */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); /* ボタンの影 */
+            text-transform: uppercase; /* 大文字のテキスト */
+            letter-spacing: 0.8px;
+            min-width: 120px; /* ボタンの最小幅を確保 */
+        }
+
+        .controls button:hover, .settings-section button:hover, .bgm-controls button:hover {
+            background-color: #00897b; /* ホバー時の濃いティール色 */
+            transform: translateY(-3px); /* わずかに持ち上がる効果 */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls button:active, .settings-section button:active, .bgm-controls button:active {
+            transform: translateY(0); /* 押し込み効果 */
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls button:disabled, .settings-section button:disabled, .bgm-controls button:disabled {
+            background-color: #b2dfdb; /* 無効時の明るいティール色 */
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* メッセージ表示 */
+        .message {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #546e7a; /* 灰色がかった青 */
+            font-weight: 500;
+        }
+
+        /* ポモドーロカウント表示 */
+        .pomodoro-count {
+            margin-top: 15px;
+            font-size: 1.1em;
+            color: #78909c; /* 明るい灰色がかった青 */
+            margin-bottom: 30px;
+        }
+
+        /* セクション (設定、BGM) */
+        .settings-section, .bgm-section {
+            background-color: #f0fdfa; /* 非常に明るいティール背景 */
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05); /* 内側の影 */
+            text-align: left; /* セクション内のテキストを左寄せ */
+        }
+
+        .settings-section h2, .bgm-section h2 {
+            color: #00796b;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #b2dfdb;
+            padding-bottom: 10px;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px; /* ラベルと入力間のスペース */
+        }
+
+        .setting-item label {
+            font-size: 1.1em;
+            color: #546e7a;
+            flex-basis: 120px; /* ラベルの固定幅 */
+            text-align: right;
+        }
+
+        .setting-item input[type="number"], .setting-item select {
+            width: 80px; /* 数値入力とセレクトの固定幅 */
+            padding: 10px;
+            border: 1px solid #b2dfdb;
+            border-radius: 8px;
+            font-size: 1.1em;
+            text-align: center;
+            -moz-appearance: textfield; /* Firefoxで矢印を非表示にする */
+            background-color: white; /* セレクトの背景を白にする */
+            cursor: pointer;
+        }
+
+        .setting-item input[type="number"]::-webkit-outer-spin-button,
+        .setting-item input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none; /* Chrome/Safariで矢印を非表示にする */
+            margin: 0;
+        }
+
+        .setting-item span {
+            font-size: 1.1em;
+            color: #78909c;
+        }
+
+        .settings-section button {
+            margin-top: 10px;
+            width: auto; /* ボタンが自然なサイズになるようにする */
+            padding: 12px 25px;
+            font-size: 1.1em;
+            display: block; /* ボタンを幅いっぱいに表示 */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* BGMコントロール */
+        .bgm-controls {
+            display: flex;
+            flex-direction: column; /* コントロールを縦に並べる */
+            gap: 15px;
+            align-items: center;
+        }
+
+        .bgm-controls button {
+            width: auto;
+            padding: 12px 25px;
+            font-size: 1.1em;
+        }
+
+        .bgm-controls input[type="range"] {
+            width: 80%; /* ボリュームスライダーの幅 */
+            -webkit-appearance: none; /* デフォルトのスタイルを削除 */
+            appearance: none;
+            height: 10px;
+            background: #b2dfdb; /* スライダートラックの色 */
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        .bgm-controls input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00796b; /* スライダーつまみの色 */
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .bgm-controls input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00796b;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 設定とBGMセクションのレスポンシブ調整 */
+        @media (max-width: 600px) {
+            .timer-container {
+                padding: 30px 20px;
+            }
+            h1 {
+                font-size: 2.2em;
+            }
+            .timer-display {
+                font-size: 5em;
+            }
+            .controls button {
+                padding: 12px 25px;
+                font-size: 1.1em;
+                min-width: 100px;
+            }
+            .message {
+                font-size: 1em;
+            }
+            .setting-item {
+                flex-direction: column; /* ラベルと入力を縦に並べる */
+                align-items: flex-start; /* アイテムを先頭に揃える */
+            }
+            .setting-item label {
+                text-align: left;
+                flex-basis: auto; /* 固定幅を削除 */
+                margin-bottom: 5px;
+            }
+            .setting-item input[type="number"], .setting-item select {
+                width: 100%; /* 入力の幅をいっぱいに */
+                max-width: 100px; /* 最大幅を制限 */
+            }
+            .bgm-controls input[type="range"] {
+                width: 90%;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .timer-display {
+                font-size: 4em;
+            }
+            .controls {
+                flex-direction: column; /* ボタンを縦に並べる */
+                gap: 10px;
+            }
+            .controls button {
+                width: 80%; /* ボタンを縦に並べたときに幅を広くする */
+                margin: 0 auto; /* 縦に並んだボタンを中央に配置 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="timer-container">
+        <h1>ポモドーロタイマー</h1>
+        <div class="timer-display" id="timer-display">25:00</div>
+        <div class="controls">
+            <button id="toggle-timer-button">開始</button>
+            <button id="reset-button">リセット</button>
+        </div>
+        <div class="message" id="message">作業時間です！集中しましょう！</div>
+        <div class="pomodoro-count" id="pomodoro-count">完了ポモドーロ: 0</div>
+
+        <!-- 設定セクション -->
+        <div class="settings-section">
+            <h2>設定</h2>
+            <div class="setting-item">
+                <label for="work-time-input">作業時間:</label>
+                <input type="number" id="work-time-input" value="25" min="1">
+                <span>分</span>
+            </div>
+            <div class="setting-item">
+                <label for="short-break-time-input">短い休憩:</label>
+                <input type="number" id="short-break-time-input" value="5" min="1">
+                <span>分</span>
+            </div>
+            <div class="setting-item">
+                <label for="long-break-time-input">長い休憩:</label>
+                <input type="number" id="long-break-time-input" value="15" min="1">
+                <span>分</span>
+            </div>
+            <button id="apply-settings-button">設定を適用</button>
+        </div>
+
+        <!-- BGMセクション -->
+        <div class="bgm-section">
+            <h2>BGM</h2>
+            <div class="setting-item">
+                <label for="bgm-selector">曲を選択:</label>
+                <select id="bgm-selector">
+                    <!-- JavaScriptでオプションがここに挿入されます -->
+                </select>
+            </div>
+            <div class="bgm-controls">
+                <button id="bgm-toggle-button">BGM再生/一時停止</button>
+                <input type="range" id="bgm-volume-slider" min="0" max="1" step="0.01" value="0.5">
+            </div>
+            <!-- BGM再生用のオーディオ要素 -->
+            <audio id="background-music" loop preload="auto"></audio>
+        </div>
+    </div>
+
+    <!-- アラーム音要素（デモンストレーション用のパブリックドメイン音源） -->
+    <audio id="alarm-sound" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="auto"></audio>
+
+    <script>
+        // DOM要素への参照を取得
+        const timerDisplay = document.getElementById('timer-display');
+        const toggleTimerButton = document.getElementById('toggle-timer-button'); // 統合されたボタン
+        const resetButton = document.getElementById('reset-button');
+        const messageDisplay = document.getElementById('message');
+        const pomodoroCountDisplay = document.getElementById('pomodoro-count');
+        const alarmSound = document.getElementById('alarm-sound');
+
+        // 設定入力要素
+        const workTimeInput = document.getElementById('work-time-input');
+        const shortBreakTimeInput = document.getElementById('short-break-time-input');
+        const longBreakTimeInput = document.getElementById('long-break-time-input');
+        const applySettingsButton = document.getElementById('apply-settings-button');
+
+        // BGM要素
+        const backgroundMusic = document.getElementById('background-music');
+        const bgmToggleButton = document.getElementById('bgm-toggle-button');
+        const bgmVolumeSlider = document.getElementById('bgm-volume-slider');
+        const bgmSelector = document.getElementById('bgm-selector'); // BGMセレクター
+
+        // タイマー変数
+        let timerInterval; // setIntervalのIDを格納
+        let timeLeft;      // 残り時間（秒単位）
+        let isRunning = false; // タイマーが実行中かどうかのフラグ
+        let currentPhase = 'work'; // 現在のフェーズ: 'work', 'short-break', 'long-break'
+        let pomodoroCounter = 0; // 完了したポモドーロの数をカウント
+
+        // 時間定数（設定によって更新される）
+        let WORK_TIME_SECONDS = 25 * 60;
+        let SHORT_BREAK_TIME_SECONDS = 5 * 60;
+        let LONG_BREAK_TIME_SECONDS = 15 * 60;
+
+        // BGMのリスト
+        // ここにMP3ファイルのURLと表示名を追加してください。
+        // 例: { name: '新しい曲名', url: 'https://example.com/your-new-song.mp3' }
+        const bgmTracks = [
+            { name: '斜陽／ヨルシカ', url: 'syayo.mp3' },
+            // ここに新しい曲を追加できます
+            // { name: '自分の好きな曲', url: 'https://example.com/my-favorite-song.mp3' },
+        ];
+
+        /**
+         * 残り時間を分と秒にフォーマットしてタイマー表示を更新します。
+         */
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        /**
+         * タイマーのカウントダウンを開始します。
+         */
+        function startTimer() {
+            isRunning = true;
+            toggleTimerButton.textContent = '一時停止'; // ボタンのテキストを変更
+            applySettingsButton.disabled = true; // 実行中は設定ボタンを無効にする
+
+            // 1秒ごとに時間を減らすインターバルを設定
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+
+                // 時間がゼロになった場合
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval); // タイマーを停止
+                    isRunning = false;
+                    playAlarm(); // アラーム音を再生
+                    handlePhaseEnd(); // 次のフェーズへ移行
+                }
+            }, 1000); // 1000ms（1秒）ごとに更新
+        }
+
+        /**
+         * タイマーを一時停止します。
+         */
+        function pauseTimer() {
+            clearInterval(timerInterval); // インターバルを停止
+            isRunning = false;
+            toggleTimerButton.textContent = '開始'; // ボタンのテキストを変更
+            applySettingsButton.disabled = false; // 一時停止時は設定ボタンを有効にする
+        }
+
+        /**
+         * タイマーを開始/一時停止の状態を切り替えます。
+         */
+        function toggleTimer() {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        /**
+         * タイマーを初期状態にリセットします。
+         */
+        function resetTimer() {
+            clearInterval(timerInterval); // 実行中のタイマーをクリア
+            isRunning = false;
+            toggleTimerButton.textContent = '開始'; // ボタンのテキストをリセット
+            applySettingsButton.disabled = false; // リセット時は設定ボタンを有効にする
+
+            // フェーズとカウンターをリセット
+            currentPhase = 'work';
+            pomodoroCounter = 0;
+            pomodoroCountDisplay.textContent = `完了ポモドーロ: ${pomodoroCounter}`;
+            messageDisplay.textContent = '作業時間です！集中しましょう！';
+            timerDisplay.style.color = '#00796b'; // タイマー表示の色をリセット
+
+            // 現在の設定に基づいて作業時間の初期値を設定
+            timeLeft = WORK_TIME_SECONDS;
+            updateDisplay(); // 表示をすぐに更新
+
+            // BGMを停止
+            backgroundMusic.pause();
+            bgmToggleButton.textContent = 'BGM再生/一時停止'; // BGMボタンのテキストをリセット
+        }
+
+        /**
+         * アラーム音を再生します。
+         */
+        function playAlarm() {
+            alarmSound.currentTime = 0; // 最近再生された場合でも最初から再生するために巻き戻す
+            alarmSound.play().catch(e => console.error("音声再生エラー:", e));
+        }
+
+        /**
+         * タイマーフェーズ（作業、短い休憩、長い休憩）の終了を処理します。
+         * 次の適切なフェーズに移行します。
+         */
+        function handlePhaseEnd() {
+            if (currentPhase === 'work') {
+                pomodoroCounter++;
+                pomodoroCountDisplay.textContent = `完了ポモドーロ: ${pomodoroCounter}`;
+
+                if (pomodoroCounter % 4 === 0) {
+                    // 4回のポモドーロの後、長い休憩を取る
+                    currentPhase = 'long-break';
+                    timeLeft = LONG_BREAK_TIME_SECONDS;
+                    messageDisplay.textContent = '長い休憩です！ゆっくり休みましょう！';
+                    timerDisplay.style.color = '#ff9800'; // 長い休憩はオレンジ色
+                } else {
+                    // それ以外の場合は短い休憩を取る
+                    currentPhase = 'short-break';
+                    timeLeft = SHORT_BREAK_TIME_SECONDS;
+                    messageDisplay.textContent = '短い休憩です！リフレッシュしましょう！';
+                    timerDisplay.style.color = '#f44336'; // 短い休憩は赤色
+                }
+            } else { // currentPhaseが'short-break'または'long-break'の場合
+                // 休憩の後、作業フェーズに戻る
+                currentPhase = 'work';
+                timeLeft = WORK_TIME_SECONDS;
+                messageDisplay.textContent = '作業時間です！集中しましょう！';
+                timerDisplay.style.color = '#00796b'; // タイマー表示の色をリセット
+            }
+            // 次のフェーズを自動的に開始
+            updateDisplay();
+            startTimer(); // 次のフェーズを自動的に開始
+        }
+
+        /**
+         * ユーザーが定義した作業時間と休憩時間を適用します。
+         */
+        function applySettings() {
+            // タイマーが実行中でない場合のみ設定を適用
+            if (isRunning) {
+                // デモンストレーション用の簡易アラート。本番環境ではカスタムモーダルを使用してください。
+                alert("タイマーが実行中は設定を変更できません。一度リセットしてください。");
+                return;
+            }
+
+            const newWorkTime = parseInt(workTimeInput.value);
+            const newShortBreakTime = parseInt(shortBreakTimeInput.value);
+            const newLongBreakTime = parseInt(longBreakTimeInput.value);
+
+            // 入力値の検証
+            if (isNaN(newWorkTime) || newWorkTime < 1 ||
+                isNaN(newShortBreakTime) || newShortBreakTime < 1 ||
+                isNaN(newLongBreakTime) || newLongBreakTime < 1) {
+                // デモンストレーション用の簡易アラート。本番環境ではカスタムモーダルを使用してください。
+                alert("有効な時間を入力してください（1分以上）。");
+                return;
+            }
+
+            WORK_TIME_SECONDS = newWorkTime * 60;
+            SHORT_BREAK_TIME_SECONDS = newShortBreakTime * 60;
+            LONG_BREAK_TIME_SECONDS = newLongBreakTime * 60;
+
+            // 新しい作業時間をすぐに適用するためにタイマーをリセット
+            resetTimer();
+            // デモンストレーション用の簡易アラート。本番環境ではカスタムモーダルを使用してください。
+            alert("設定が適用されました！");
+        }
+
+        /**
+         * BGMの再生/一時停止を切り替えます。
+         */
+        function toggleBGM() {
+            // BGMのソースが設定されていない場合は再生しない
+            if (!backgroundMusic.src) {
+                // 初期ロード時にBGMが設定されていない場合があるため、最初の曲を設定
+                if (bgmTracks.length > 0) {
+                    backgroundMusic.src = bgmTracks[0].url;
+                    backgroundMusic.load();
+                } else {
+                    alert("BGMファイルがありません。リストに曲を追加してください。");
+                    return;
+                }
+            }
+
+            if (backgroundMusic.paused) {
+                backgroundMusic.play().catch(e => console.error("BGM再生エラー:", e));
+                bgmToggleButton.textContent = 'BGM一時停止';
+            } else {
+                backgroundMusic.pause();
+                bgmToggleButton.textContent = 'BGM再生';
+            }
+        }
+
+        /**
+         * スライダーに基づいてBGMの音量を更新します。
+         */
+        function updateBGMVolume() {
+            backgroundMusic.volume = bgmVolumeSlider.value;
+        }
+
+        /**
+         * 選択されたBGMソースに変更し、再生中だった場合は再生を試みます。
+         */
+        function changeBGM() {
+            const selectedUrl = bgmSelector.value;
+            if (!selectedUrl) {
+                backgroundMusic.pause();
+                backgroundMusic.src = ''; // ソースをクリア
+                bgmToggleButton.textContent = 'BGM再生/一時停止';
+                return;
+            }
+
+            const wasPlaying = !backgroundMusic.paused;
+            backgroundMusic.src = selectedUrl;
+            backgroundMusic.load(); // 新しいソースを読み込む
+            
+            // オーディオが再生可能になるまで'loadeddata'イベントをリッスン
+            backgroundMusic.onloadeddata = () => {
+                if (wasPlaying) {
+                    backgroundMusic.play().catch(e => console.error("BGM変更後の再生エラー:", e));
+                }
+                backgroundMusic.onloadeddata = null; // 使用後にリスナーを削除
+            };
+            // 選択されたらBGMボタンのテキストを「BGM再生」にリセット
+            bgmToggleButton.textContent = 'BGM再生';
+        }
+
+        /**
+         * BGMセレクターにオプションを動的に追加します。
+         */
+        function populateBGMSelector() {
+            bgmSelector.innerHTML = ''; // 既存のオプションをクリア
+            // 空のオプションを追加（選択されていない状態）
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '曲を選択してください';
+            bgmSelector.appendChild(defaultOption);
+
+            bgmTracks.forEach(track => {
+                const option = document.createElement('option');
+                option.value = track.url;
+                option.textContent = track.name;
+                bgmSelector.appendChild(option);
+            });
+            // 初期選択を設定 (最初の曲をデフォルトにするなど)
+            if (bgmTracks.length > 0) {
+                bgmSelector.value = bgmTracks[0].url;
+                backgroundMusic.src = bgmTracks[0].url;
+                backgroundMusic.load();
+            }
+        }
+
+        // ボタンとコントロールのイベントリスナー
+        toggleTimerButton.addEventListener('click', toggleTimer); // 統合されたトグル関数を使用
+        resetButton.addEventListener('click', resetTimer);
+        applySettingsButton.addEventListener('click', applySettings);
+        bgmToggleButton.addEventListener('click', toggleBGM);
+        bgmVolumeSlider.addEventListener('input', updateBGMVolume); // 連続更新のために'input'イベントを使用
+        bgmSelector.addEventListener('change', changeBGM); // BGM選択の変更をリッスン
+
+        // ページ読み込み時の初期設定
+        document.addEventListener('DOMContentLoaded', () => {
+            // 入力値から時間定数を初期化
+            WORK_TIME_SECONDS = parseInt(workTimeInput.value) * 60;
+            SHORT_BREAK_TIME_SECONDS = parseInt(shortBreakTimeInput.value) * 60;
+            LONG_BREAK_TIME_SECONDS = parseInt(longBreakTimeInput.value) * 60;
+
+            timeLeft = WORK_TIME_SECONDS; // 作業時間で初期時間を設定
+            updateDisplay(); // 初期表示を更新
+            backgroundMusic.volume = bgmVolumeSlider.value; // BGMの初期音量を設定
+            populateBGMSelector(); // BGMセレクターにオプションをロード
+        });
+    </script>
+</body>
+</html>
