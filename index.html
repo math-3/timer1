@@ -37,7 +37,7 @@
             border-radius: 20px;
             box-shadow: 0 15px 40px rgba(255, 143, 163, 0.2);
             text-align: center;
-            width: 90%;
+            width: 100%;
             max-width: 600px;
             box-sizing: border-box;
             animation: fadeIn 1s ease-out;
@@ -237,9 +237,8 @@
             .timer-container { padding: 30px 20px; }
             h1 { font-size: 2em; }
             .timer-display { font-size: 5em; }
-            .setting-item { flex-direction: column; align-items: flex-start; }
             .setting-item label { text-align: left; flex-basis: auto; }
-            .setting-item input[type="number"], .setting-item select { width: 100%; max-width: 120px; }
+            .setting-item input[type="number"], .setting-item select { width: 80px; }
         }
     </style>
 </head>
@@ -280,7 +279,7 @@
             <h2>BGM</h2>
             <div class="setting-item">
                 <label for="bgm-selector">曲を選択:</label>
-                <select id="bgm-selector" style="width: 360px;"></select>
+                <select id="bgm-selector" style="flex: 1;"></select>
             </div>
             <div class="bgm-controls">
                 <button id="bgm-toggle-button">BGM再生/一時停止</button>
